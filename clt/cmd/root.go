@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/komkom/csvdisplay/display"
 	"github.com/spf13/cobra"
-	"github.com/tutti-ch/csvdisplay/display"
 )
 
 var cfgFile string
@@ -33,7 +33,7 @@ var RootCmd = &cobra.Command{
 			rs := strings.Trim(ranges[0], ` `)
 			re := strings.Trim(ranges[1], ` `)
 
-			fmt.Println(rs + ` ` + re)
+			//fmt.Println(rs + ` ` + re)
 
 			s, err := strconv.ParseInt(rs, 10, 64)
 			if err != nil {

@@ -39,6 +39,7 @@ func createData(csvPath string, start int, end int) (header []string, records []
 
 	r := csv.NewReader(f)
 	idx := 0
+	hasHeader := false
 	for {
 		if end <= idx {
 			break
@@ -53,7 +54,8 @@ func createData(csvPath string, start int, end int) (header []string, records []
 			return
 		}
 
-		if idx == 0 {
+		if !hasHeader {
+			hasHeader = true
 			// parse the header
 			h, consume := createHeader(record)
 			header = h
