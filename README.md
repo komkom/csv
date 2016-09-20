@@ -49,7 +49,9 @@ IDX | AD ID | AD SUBJECT |            AD BODY             | AD PRICE
 
 ## give it a try
 
+```
 go get github.com/komkom/csv/...
 go install github.com/komkom/csv 
+```
 
 would be nice to get some more useful filters if anyone finds the time...
