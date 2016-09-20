@@ -1,4 +1,4 @@
-package display
+package render
 
 import (
 	"encoding/csv"
@@ -10,12 +10,27 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-type FilterAction func(header []string, record []string) (trec []string, err error)
-
 type Output interface {
 	AddHeader(header []string)
 	AddRecord(record []string)
 	Flush()
+}
+
+type Filter interface {
+	Header(header []string) (headerout []string, err error)
+	Record(record []string) (recordout []string, err error)
+}
+
+type NilFilter struct {
+	count int
+}
+
+func (f *NilFilter) Header(header []string) (headerout []string, err error) {
+	return header, nil
+}
+
+func (f *NilFilter) Record(record []string) (recordout []string, err error) {
+	return record, nil
 }
 
 type TableOutput struct {
@@ -78,10 +93,14 @@ func (c CsvOutput) Flush() {
 	c.writer.Flush()
 }
 
-func StartReadingCSV(reader io.Reader, filter FilterAction, output Output, start int, end *int) error {
+func StartReadingCSV(reader io.Reader, filter Filter, output Output, start int, end *int) error {
 
 	if end != nil && start > (*end) {
 		return fmt.Errorf(`records start > end`)
+	}
+
+	if filter == nil {
+		filter = &NilFilter{}
 	}
 
 	msgs := make(chan interface{})
@@ -95,12 +114,22 @@ func StartReadingCSV(reader io.Reader, filter FilterAction, output Output, start
 		switch o := m.(type) {
 		case []string:
 			if !hasHeader {
-				output.AddHeader(o)
+
+				h, err := filter.Header(o)
+				if err != nil {
+					return err
+				}
+
+				output.AddHeader(h)
 				hasHeader = true
 				continue
 			}
 
-			output.AddRecord(o)
+			r, err := filter.Record(o)
+			if err == nil {
+				output.AddRecord(r)
+			}
+
 		case error:
 			return o
 		}

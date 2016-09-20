@@ -1,6 +1,6 @@
 package main
 
-import "github.com/komkom/csvdisplay/clt/cmd"
+import "github.com/komkom/csvdisplay/cmd"
 
 func main() {
 	cmd.Execute()
