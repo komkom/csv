@@ -3,7 +3,8 @@ view create and transform csv files.
 
 ## usage
 
-csv --path somefile.csv --print
+csv --print --path somefile.csv
+
 display a pretty csv file on the screen
 
 ```
