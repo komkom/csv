@@ -17,7 +17,7 @@ var end *int
 var csvPath string
 
 func setup(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&csvPath, "csv", "", "path to a csv encoded file.")
+	cmd.Flags().StringVar(&csvPath, "path", "", "path to a csv encoded file.")
 	cmd.Flags().StringVar(&crange, "range", "", "rows to match eg `[0,10]` form row 0 to 9")
 	cmd.Flags().BoolVar(&print, "print", false, "prints the csv file as a table.")
 }
