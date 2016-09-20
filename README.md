@@ -32,7 +32,7 @@ csv --path somefile.csv --range [1,10] --print
 
 use the pipe
 ```
-csv --path file.csv | csv index | csv match "subject" -- print
+csv --path file.csv | csv index | csv match "subject" --print
 ```
 
 this adds an index as the first column then filters out all the columns which do not contain `subject`. 
