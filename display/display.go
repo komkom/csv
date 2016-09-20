@@ -10,47 +10,123 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-func Render(csvPath string, start int, end int) (err error) {
-	header, records, err := createData(csvPath, start, end)
-	if err != nil {
-		return
-	}
+type FilterAction func(header []string, record []string) (trec []string, err error)
 
-	table, err := createTable(records, header)
-	if err != nil {
-		return
-	}
-
-	table.Render()
-	return
+type Output interface {
+	AddHeader(header []string)
+	AddRecord(record []string)
+	Flush()
 }
 
-func createData(csvPath string, start int, end int) (header []string, records [][]string, err error) {
+type TableOutput struct {
+	table       *tablewriter.Table
+	insertCount int
+}
 
-	if start > end {
-		err = fmt.Errorf(`records start > end`)
-		return
+func NewTableOutput() *TableOutput {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetBorder(false)
+
+	return &TableOutput{table: table}
+}
+
+func (t *TableOutput) AddHeader(header []string) {
+	t.table.SetHeader(header)
+}
+
+func (t *TableOutput) AddRecord(record []string) {
+	t.table.Append(record)
+
+	if t.insertCount >= 100 {
+		t.table.Render()
+		t.insertCount = 0
 	}
 
-	f, err := os.Open(csvPath)
-	if err != nil {
-		return
+	t.insertCount += 1
+}
+
+func (t TableOutput) Flush() {
+	t.table.Render()
+}
+
+type CsvOutput struct {
+	writer      *csv.Writer
+	insertCount int
+}
+
+func NewCsvOutput() *CsvOutput {
+	writer := csv.NewWriter(os.Stdout)
+	return &CsvOutput{writer: writer}
+}
+
+func (c *CsvOutput) AddHeader(header []string) {
+	c.writer.Write(header)
+}
+
+func (c *CsvOutput) AddRecord(record []string) {
+	c.writer.Write(record)
+
+	if c.insertCount >= 100 {
+		c.writer.Flush()
+		c.insertCount = 0
 	}
 
-	r := csv.NewReader(f)
+	c.insertCount += 1
+}
+
+func (c CsvOutput) Flush() {
+	c.writer.Flush()
+}
+
+func StartReadingCSV(reader io.Reader, filter FilterAction, output Output, start int, end *int) error {
+
+	if end != nil && start > (*end) {
+		return fmt.Errorf(`records start > end`)
+	}
+
+	msgs := make(chan interface{})
+	go func() {
+		readCSV(reader, start, end, msgs)
+		close(msgs)
+	}()
+
+	var hasHeader bool
+	for m := range msgs {
+		switch o := m.(type) {
+		case []string:
+			if !hasHeader {
+				output.AddHeader(o)
+				hasHeader = true
+				continue
+			}
+
+			output.AddRecord(o)
+		case error:
+			return o
+		}
+	}
+
+	output.Flush()
+
+	return nil
+}
+
+func readCSV(reader io.Reader, start int, end *int, msgs chan interface{}) {
+	r := csv.NewReader(reader)
 	idx := 0
+	var header []string
 	hasHeader := false
 	for {
-		if end <= idx {
+		if end != nil && *end <= idx {
 			break
 		}
 
-		record, rerr := r.Read()
-		if rerr == io.EOF {
+		record, err := r.Read()
+		if err == io.EOF {
 			break
 		}
-		if rerr != nil {
-			err = rerr
+		if err != nil {
+			msgs <- err
 			return
 		}
 
@@ -59,6 +135,8 @@ func createData(csvPath string, start int, end int) (header []string, records []
 			// parse the header
 			h, consume := createHeader(record)
 			header = h
+
+			msgs <- h
 			if consume {
 				continue
 			}
@@ -67,32 +145,17 @@ func createData(csvPath string, start int, end int) (header []string, records []
 		if idx >= start {
 
 			if len(record) != len(header) {
-				err = fmt.Errorf("len(record) != len(header)")
+				msgs <- fmt.Errorf("len(record) != len(header)")
+				return
 			}
 
-			records = append(records, record)
+			msgs <- record
+			//records = append(records, record)
 		}
 
 		idx++
 	}
 
-	return
-}
-
-func createTable(records [][]string, header []string) (table *tablewriter.Table, err error) {
-
-	table = tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(header)
-	table.SetBorder(false)
-
-	for _, r := range records {
-		if len(r) != len(header) {
-			err = fmt.Errorf("len(record) != len(header)")
-			return
-		}
-
-		table.Append(r)
-	}
 	return
 }
 

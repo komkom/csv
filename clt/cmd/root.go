@@ -12,6 +12,7 @@ import (
 
 var cfgFile string
 var match string
+var print bool
 
 var RootCmd = &cobra.Command{
 	Use:   "csvdispaly",
@@ -20,7 +21,7 @@ var RootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var start int
-		var end int
+		var end *int
 
 		if len(match) > 0 {
 			match = strings.Replace(match, `[`, ``, -1)
@@ -33,8 +34,6 @@ var RootCmd = &cobra.Command{
 			rs := strings.Trim(ranges[0], ` `)
 			re := strings.Trim(ranges[1], ` `)
 
-			//fmt.Println(rs + ` ` + re)
-
 			s, err := strconv.ParseInt(rs, 10, 64)
 			if err != nil {
 				panic(err)
@@ -45,16 +44,29 @@ var RootCmd = &cobra.Command{
 			}
 
 			start = int(s)
-			end = int(e)
+			t := int(e)
+			end = &t
 		}
 
-		if len(args) != 1 {
-			panic(fmt.Errorf(`expected csv arg as only argument.`))
+		input := os.Stdin
+		if len(args) > 0 {
+			f, err := os.Open(args[0])
+			if err != nil {
+				panic(err)
+			}
+			input = f
 		}
 
-		err := display.Render(args[0], start, end)
-		if err != nil {
-			panic(err)
+		if print {
+			err := display.StartReadingCSV(input, nil, display.NewTableOutput(), start, end)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			err := display.StartReadingCSV(input, nil, display.NewCsvOutput(), start, end)
+			if err != nil {
+				panic(err)
+			}
 		}
 	},
 }
@@ -68,4 +80,5 @@ func Execute() {
 
 func init() {
 	RootCmd.Flags().StringVar(&match, "match", "", "entries to match eg `[10,10]`")
+	RootCmd.Flags().BoolVar(&print, "print", false, "prints the csv file as a table.")
 }
