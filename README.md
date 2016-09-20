@@ -32,7 +32,7 @@ csv --path somefile.csv --range [1,10] --print
 
 use the pipe
 ```
-csv --path | csv index | csv match "query" -- print
+csv --path file.csv | csv index | csv match "query" -- print
 ```
 
 this adds an index as the first column then filters out all the columns which do not contain `query`. 
@@ -41,3 +41,5 @@ this adds an index as the first column then filters out all the columns which do
 ## give it a try
 
 go get github.com/komkom/csvdisplay/...
+
+would be nice to get some more useful filters filters if anyone finds the time...
