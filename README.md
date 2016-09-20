@@ -36,7 +36,7 @@ csv --path file.csv | csv index | csv match "subject" -- print
 ```
 
 this adds an index as the first column then filters out all the columns which do not contain `subject`. 
-somethink like 
+something like 
 ```
 IDX | AD ID | AD SUBJECT |            AD BODY             | AD PRICE
 +-----+-------+------------+--------------------------------+----------+
