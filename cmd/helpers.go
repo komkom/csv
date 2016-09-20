@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/komkom/csvdisplay/render"
+	"github.com/komkom/csv/render"
 	"github.com/spf13/cobra"
 )
 

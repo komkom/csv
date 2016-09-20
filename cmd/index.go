@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/komkom/csvdisplay/filters"
+	"github.com/komkom/csv/filters"
 	"github.com/spf13/cobra"
 )
 
