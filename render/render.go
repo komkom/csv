@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 	"unicode"
 
 	"github.com/olekukonko/tablewriter"
@@ -103,37 +104,55 @@ func StartReadingCSV(reader io.Reader, filter Filter, output Output, start int, 
 		filter = &NilFilter{}
 	}
 
+	done := make(chan int)
 	msgs := make(chan interface{})
 	go func() {
 		readCSV(reader, start, end, msgs)
-		close(msgs)
+		close(done)
 	}()
 
 	var hasHeader bool
-	for m := range msgs {
-		switch o := m.(type) {
-		case []string:
-			if !hasHeader {
+	var hasRun bool
 
-				h, err := filter.Header(o)
-				if err != nil {
-					return err
+	for {
+
+		select {
+		case <-time.After(time.Second):
+			if !hasRun {
+				return fmt.Errorf("no input")
+			}
+
+		case m := <-msgs:
+			switch o := m.(type) {
+			case []string:
+				if !hasHeader {
+
+					h, err := filter.Header(o)
+					if err != nil {
+						return err
+					}
+
+					output.AddHeader(h)
+					hasHeader = true
+					continue
 				}
 
-				output.AddHeader(h)
-				hasHeader = true
-				continue
-			}
+				r, err := filter.Record(o)
+				if err == nil {
+					output.AddRecord(r)
+				}
 
-			r, err := filter.Record(o)
-			if err == nil {
-				output.AddRecord(r)
+			case error:
+				return o
 			}
+		case <-done:
+			goto exit
 
-		case error:
-			return o
 		}
+
+		hasRun = true
 	}
+exit:
 
 	output.Flush()
 
