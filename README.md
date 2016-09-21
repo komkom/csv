@@ -32,14 +32,26 @@ csv --path somefile.csv --range [1,10] --print
 
 use the pipe
 ```
-csv --path file.csv | csv index | csv match "query" -- print
+csv --path file.csv | csv index | csv match "subject" --print
 ```
 
-this adds an index as the first column then filters out all the columns which do not contain `query`. 
+this adds an index as the first column then filters out all the columns which do not contain `subject`. 
+something like 
+```
+IDX | AD ID | AD SUBJECT |            AD BODY             | AD PRICE
++-----+-------+------------+--------------------------------+----------+
+   99 | 12345 | subject 99 | body asdf query                | price 99
+      |       |            | asdfdsfasdfasdf   asdfasdfasdf |
+      |       |            |   asdfasdfsdf  asdfasdfsadfasd |
+      |       |            |   asdl;kfjsdf  sdfjaslk        |
+```
 
 
 ## give it a try
 
+```
 go get github.com/komkom/csv/...
+go install github.com/komkom/csv 
+```
 
-would be nice to get some more useful filters filters if anyone finds the time...
+would be nice to get some more useful filters if anyone finds the time...
