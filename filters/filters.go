@@ -22,17 +22,19 @@ func (f *IndexFilter) Record(record []string) (recordout []string, err error) {
 }
 
 type MatchFilter struct {
+	column  *int
 	regexes []*regexp.Regexp
+	invert  bool
 }
 
-func NewMatchFilter(rregexes []string) *MatchFilter {
+func NewMatchFilter(rregexes []string, column *int, invert bool) *MatchFilter {
 
 	var regexes []*regexp.Regexp
 	for _, rg := range rregexes {
 		regexes = append(regexes, regexp.MustCompile(rg))
 	}
 
-	return &MatchFilter{regexes}
+	return &MatchFilter{column, regexes, invert}
 }
 
 func (m *MatchFilter) Header(header []string) (headerout []string, err error) {
@@ -41,13 +43,39 @@ func (m *MatchFilter) Header(header []string) (headerout []string, err error) {
 
 func (m *MatchFilter) Record(record []string) (recordout []string, err error) {
 
-	for _, c := range record {
+	if m.column != nil {
+		c := *m.column
+		if c >= len(record) {
+			return nil, fmt.Errorf("no such column")
+		}
+
 		for _, r := range m.regexes {
-			if r.FindAllString(c, 1) != nil {
-				return record, nil
+			if r.FindAllString(record[c], 1) != nil {
+				if !m.invert {
+					return record, nil
+				} else {
+					return nil, fmt.Errorf("has match")
+				}
+			}
+		}
+	} else {
+
+		for _, c := range record {
+			for _, r := range m.regexes {
+				if r.FindAllString(c, 1) != nil {
+					if !m.invert {
+						return record, nil
+					} else {
+						return nil, fmt.Errorf("has match")
+					}
+				}
 			}
 		}
 	}
 
-	return record, fmt.Errorf("not matched")
+	if !m.invert {
+		return record, fmt.Errorf("not matched")
+	} else {
+		return record, nil
+	}
 }

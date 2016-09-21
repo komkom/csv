@@ -2,10 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/komkom/csv/filters"
 	"github.com/spf13/cobra"
 )
+
+var column string
+var invert bool
 
 // matchCmd represents the match command
 var matchCmd = &cobra.Command{
@@ -16,7 +20,17 @@ var matchCmd = &cobra.Command{
 			panic(fmt.Errorf("no match arg found."))
 		}
 
-		mf := filters.NewMatchFilter(args)
+		var c *int
+
+		if len(column) > 0 {
+			ri, err := strconv.ParseInt(column, 10, 64)
+			if err == nil {
+				i := int(ri)
+				c = &i
+			}
+		}
+
+		mf := filters.NewMatchFilter(args, c, invert)
 		run(mf)
 	},
 }
@@ -24,4 +38,6 @@ var matchCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(matchCmd)
 	setup(matchCmd)
+	matchCmd.Flags().StringVar(&column, "column", "", "column to match on.")
+	matchCmd.Flags().BoolVar(&invert, "not", false, "filter out matches")
 }
