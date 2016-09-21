@@ -22,12 +22,17 @@ func (f *IndexFilter) Record(record []string) (recordout []string, err error) {
 }
 
 type MatchFilter struct {
-	m *regexp.Regexp
+	regexes []*regexp.Regexp
 }
 
-func NewMatchFilter(regex string) *MatchFilter {
-	m := regexp.MustCompile(regex)
-	return &MatchFilter{m}
+func NewMatchFilter(rregexes []string) *MatchFilter {
+
+	var regexes []*regexp.Regexp
+	for _, rg := range rregexes {
+		regexes = append(regexes, regexp.MustCompile(rg))
+	}
+
+	return &MatchFilter{regexes}
 }
 
 func (m *MatchFilter) Header(header []string) (headerout []string, err error) {
@@ -37,8 +42,10 @@ func (m *MatchFilter) Header(header []string) (headerout []string, err error) {
 func (m *MatchFilter) Record(record []string) (recordout []string, err error) {
 
 	for _, c := range record {
-		if m.m.FindAllString(c, 1) != nil {
-			return record, nil
+		for _, r := range m.regexes {
+			if r.FindAllString(c, 1) != nil {
+				return record, nil
+			}
 		}
 	}
 
