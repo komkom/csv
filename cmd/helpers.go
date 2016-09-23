@@ -27,7 +27,9 @@ func run(filter render.Filter) {
 	if len(crange) > 0 {
 		crange = strings.Replace(crange, `[`, ``, -1)
 		crange = strings.Replace(crange, `]`, ``, -1)
-		ranges := strings.Split(crange, `,`)
+		crange := strings.Replace(crange, `,`, `:`, -1)
+		ranges := strings.Split(crange, `:`)
+
 		if len(ranges) != 2 {
 			panic(fmt.Errorf(`match format incorrect`))
 		}
@@ -36,19 +38,20 @@ func run(filter render.Filter) {
 		re := strings.Trim(ranges[1], ` `)
 
 		s, err := strconv.ParseInt(rs, 10, 64)
-		if err != nil {
-			panic(err)
+		if err == nil {
+			start = int(s)
 		}
 		e, err := strconv.ParseInt(re, 10, 64)
-		if err != nil {
-			panic(err)
+		if err == nil {
+			t := int(e)
+			end = &t
 		}
-
-		start = int(s)
-		t := int(e)
-		end = &t
 	}
 
+	run2(filter, start, end)
+}
+
+func run2(filter render.Filter, start int, end *int) {
 	input := os.Stdin
 	if len(csvPath) > 0 {
 		f, err := os.Open(csvPath)

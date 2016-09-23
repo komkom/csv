@@ -29,25 +29,28 @@ var countCmd = &cobra.Command{
 	Use:   "count",
 	Short: "Count the number of rows in a csv file",
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("%v\n", countAction())
+	},
+}
 
-		countFilter := &CountFilter{}
+func countAction() int {
+	countFilter := &CountFilter{}
 
-		input := os.Stdin
-		if len(csvPath) > 0 {
-			f, err := os.Open(csvPath)
-			if err != nil {
-				panic(err)
-			}
-			input = f
-		}
-
-		err := render.StartReadingCSV(input, countFilter, &render.NilOutput{}, start, end)
+	input := os.Stdin
+	if len(csvPath) > 0 {
+		f, err := os.Open(csvPath)
 		if err != nil {
 			panic(err)
 		}
+		input = f
+	}
 
-		fmt.Printf("count %v\n", countFilter.Count())
-	},
+	err := render.StartReadingCSV(input, countFilter, &render.NilOutput{}, start, end)
+	if err != nil {
+		panic(err)
+	}
+
+	return countFilter.Count()
 }
 
 func init() {
