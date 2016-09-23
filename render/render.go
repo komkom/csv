@@ -22,6 +22,12 @@ type Filter interface {
 	Record(record []string) (recordout []string, err error)
 }
 
+type NilOutput struct{}
+
+func (n *NilOutput) AddHeader(header []string) {}
+func (n *NilOutput) AddRecord(record []string) {}
+func (n *NilOutput) Flush()                    {}
+
 type NilFilter struct {
 	count int
 }
