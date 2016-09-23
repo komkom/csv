@@ -20,7 +20,7 @@ func (c *CountFilter) Header(header []string) (headerout []string, err error) {
 	return nil, nil
 }
 
-func (c *CountFilter) Record(record []string) (recordout []string, err error) {
+func (c *CountFilter) Record(idx int, record []string) (recordout []string, err error) {
 	c.count += 1
 	return nil, fmt.Errorf(`dont include this record`)
 }

@@ -5,19 +5,16 @@ import (
 	"regexp"
 )
 
-type IndexFilter struct {
-	count int
-}
+type IndexFilter struct{}
 
 func (f *IndexFilter) Header(header []string) (headerout []string, err error) {
 	return append([]string{`idx`}, header...), nil
 }
 
-func (f *IndexFilter) Record(record []string) (recordout []string, err error) {
+func (f *IndexFilter) Record(idx int, record []string) (recordout []string, err error) {
 	record = append(record, ``)
 	copy(record[1:len(record)], record[0:len(record)-1])
-	record[0] = fmt.Sprintf("%v", f.count)
-	f.count += 1
+	record[0] = fmt.Sprintf("%v", idx)
 	return record, nil
 }
 
@@ -41,7 +38,7 @@ func (m *MatchFilter) Header(header []string) (headerout []string, err error) {
 	return header, nil
 }
 
-func (m *MatchFilter) Record(record []string) (recordout []string, err error) {
+func (m *MatchFilter) Record(idx int, record []string) (recordout []string, err error) {
 
 	if m.column != nil {
 		c := *m.column

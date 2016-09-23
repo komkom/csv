@@ -19,7 +19,7 @@ type Output interface {
 
 type Filter interface {
 	Header(header []string) (headerout []string, err error)
-	Record(record []string) (recordout []string, err error)
+	Record(idx int, record []string) (recordout []string, err error)
 }
 
 type NilOutput struct{}
@@ -32,11 +32,16 @@ type NilFilter struct {
 	count int
 }
 
+type IndexedRecord struct {
+	idx    int
+	record []string
+}
+
 func (f *NilFilter) Header(header []string) (headerout []string, err error) {
 	return header, nil
 }
 
-func (f *NilFilter) Record(record []string) (recordout []string, err error) {
+func (f *NilFilter) Record(idx int, record []string) (recordout []string, err error) {
 	return record, nil
 }
 
@@ -119,7 +124,7 @@ func StartReadingCSV(reader io.Reader, filter Filter, output Output, start int, 
 
 	var hasHeader bool
 	var hasRun bool
-
+	var idx int
 	for {
 
 		select {
@@ -142,11 +147,17 @@ func StartReadingCSV(reader io.Reader, filter Filter, output Output, start int, 
 					hasHeader = true
 					continue
 				}
+			case IndexedRecord:
+				if !hasHeader {
+					return fmt.Errorf(`no header found.`)
+				}
 
-				r, err := filter.Record(o)
+				r, err := filter.Record(o.idx, o.record)
 				if err == nil {
 					output.AddRecord(r)
 				}
+
+				idx += 1
 
 			case error:
 				return o
@@ -203,7 +214,7 @@ func readCSV(reader io.Reader, start int, end *int, msgs chan interface{}) {
 				return
 			}
 
-			msgs <- record
+			msgs <- IndexedRecord{idx, record}
 			//records = append(records, record)
 		}
 
